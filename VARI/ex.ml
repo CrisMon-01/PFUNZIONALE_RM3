@@ -104,7 +104,6 @@ let rec duplica = function
 []-> []
 |x::rest -> x::x::duplica rest
 
-
 let rec alterna = function
 	[]->[]
 	|[x]-> []
@@ -154,6 +153,7 @@ in aux 0 s
 let rec list_of n = 
 	if n <= 0 then []
 	else n::(list_of (n-1))
+	
 let rec inscoppia y = function
 	[]->[]
 	|x::rest-> (y,x)::inscoppia y rest
@@ -189,6 +189,7 @@ let rec takewhile p = function
 []->[]
 |x::rest-> if p x then x::takewhile p rest 
 			else []
+
 let rec  dropwhile p = function
 	[]->[]
 	|x::rest-> if p x then dropwhile p rest 
@@ -238,3 +239,164 @@ let rec spezza y = function
 	[]-> ([],[])
 	|x::rest-> if y=x then find y rest
 				else spezza y rest
+
+let pairwith_map a l =
+	List.map(function x-> (a,x))l
+
+let rec tuttle_l n a b =
+	if n = 0 then [[]]
+	else let ll = tuttle_l (n-1) a b in
+		(List.map (function x -> a::x)ll)@(List.map(List.cons b)ll)
+
+let some_all p ll =
+	List.find(List.for_all p) ll
+
+let permutazione l1 l2 = 
+	List.for_all(function x -> List.mem x l2)l1	
+
+let rec dim x = function
+	[]-> failwith "no match"
+	|y::rest-> if (List.mem x (fst y))
+					then snd y
+				else dim x rest
+
+let rec presucc y = function
+	[]->failwith "errore"
+	|x::rest-> if x = y then (0, List.length rest)
+				else let (a,b)=presucc y rest
+					in (a+1,b)
+
+let rec sum = function
+	[]->(0,0)
+	|x::rest-> let (k1,k2) = sum rest 
+				in (k1 + fst x,k2 + snd x)
+
+let rec prec_succ_lst y = function
+	[]->(0,0)
+	|x::rst-> let (a,b)=prec_succ_lst y rst in
+				try let (p,s) = presucc y x in (a+p,b+s)
+				with _-> (a,b)
+	
+let purge a ll = 
+	List.filter(function x -> not(List.mem a x))ll
+
+let rec splits = function
+	[]->([],[])
+	|[x]->([x],[])
+	|x::y::rest-> let (xs,ys) = splits rest in (x::xs,y::ys)
+
+type 'a ntree = Tr of 'a * 'a ntree list
+let leaf n = Tr(n, [])
+let t = Tr(1,[Tr(2,[Tr(3,[leaf 4;
+                          leaf 5]);
+                    Tr(6,[leaf 7]);
+                    leaf 8]);
+              leaf 9;
+              Tr(10,[Tr(11,[leaf 12;
+                            leaf 13;
+                            leaf 14]);
+                     leaf 15;
+                     Tr(16,[leaf 17;
+                            Tr(18,[leaf 19;
+                                   leaf 20])])])])
+
+(*sett 16*)
+let rec subt a t = match t with 
+	|Tr(x, tl) -> if x = a then tl @ subt_l a tl
+					else subt_l a tl
+and subt_l a = function
+	[]-> []
+	|t::ts-> subt a t @ subt_l a ts
+
+	(*lug 15*)
+	let t =
+	Tr(1,[Tr(2,[Tr(5,[]);
+	Tr(8,[Tr(9,[Tr(5,[])]);            Tr(10,[])])]);
+	Tr(3,[Tr(6,[]);
+	Tr(7,[]);
+	Tr(8,[Tr(9,[]);            Tr(4,[])])]);
+	Tr(4,[Tr(9,[]);
+	Tr(10,[]);
+	Tr(9,[Tr(2,[])])])]) 
+
+let root (Tr(x,_)) = x 
+let rec radici = function
+	[]->[]
+	|t::ts-> if List.mem (root t) (radici ts) then radici ts 
+				else (root t)::(radici ts)
+
+let rec accoppia a = function
+	[]->[]
+	|x::rst-> (a,x) :: accoppia a rst
+let rec union set1 = function
+	[]->set1
+	|x::rest-> if not(List.mem x set1) then x::union set1 rest
+				else union set1 rest
+
+let rec archi = function 
+	Tr(x,[]) -> []
+	|Tr(x,tl)-> let rad = radici tl in
+				union (accoppia x rad) (archi_l tl)
+and archi_l = function
+	[]->[]
+	|t::ts-> union (archi t) (archi_l ts) 
+
+(*feb 15*)
+let rec mkset = function
+	[]->[]
+	|x::rest-> if List.mem x rest then mkset rest
+				else x::(mkset rest)
+
+let rec nodi = function
+	Tr(x,[]) -> [x]
+	|Tr(x,l) -> mkset (x::(nodi_l l))
+and nodi_l = function
+	[]->[]
+	|t::ts -> nodi t@nodi_l ts
+
+let root (Tr(a,_))=a
+let rec figli a = function
+	Tr(x,l)-> mkset(if x = a then ((List.map(root )l)@(figli_lista a l))
+					else (figli_lista a l) )
+and figli_lista a = function
+	[]->[]
+	|t::ts-> (figli a t)@(figli_lista a ts)
+
+
+
+(*a' tree->a'list*)
+(*dato un albero ritorna i nodi con un n di figli = alla prof*)
+let prof2figli t = 
+	let rec aux p = function
+		Tr(x,ls)-> if List.length ls = p then x::(p2f_lis (p+1) ls)
+					else p2f_lis (p+1) ls
+	and p2f_lis k = function
+		[]->[]
+		|tr::ts-> (aux k tr)@(p2f_lis k ts)
+	in aux 0 t
+
+type  'a btree = Empty
+				 |Tr of 'a * 'a btree * 'a btree
+let leaf n = Tr(n,Empty,Empty)
+let bin = Tr(1,Tr(2,Empty,Tr(3,leaf 3,leaf 5)),Tr(1,leaf 7,Empty))
+
+(*(a->bool) a' btree-> bool*)
+(*dato un albero verifica se tutti i figli sn che verificano un condizione*)
+let root a = match a with 
+		 Empty-> failwith "Empty"
+		 |Tr(x,_,_) -> x
+
+let rec verifs p = function
+	Empty -> true	
+	|Tr(x,Empty,Empty) -> p x
+	|Tr(x,sn,dx) -> try (p (root sn))  && verifs p sn && verifs p dx 
+						with _ -> verifs p dx 
+
+let valoreUprof t =
+	let rec aux p = function
+		Empty -> failwith "err"
+		|Tr(x,Empty,Empty) -> if x = p then x 
+							else failwith "err"
+		|Tr(x,sn,dx) -> if x = p then x 
+						else try (min (aux (p+1) sn) (aux (p+1) dx) ) with _-> try (aux (p+1) dx )with _-> aux (p+1) sn 	
+	in aux 0 t
