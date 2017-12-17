@@ -1,4 +1,29 @@
 type 'a ntree = Tr of 'a * 'a ntree list
+let leaf n = Tr(n,[])
+let t = Tr(1,[Tr(2,[Tr(3,[leaf 4;
+                          leaf 5]);
+                    Tr(6,[leaf 7]);
+                    leaf 8]);
+              leaf 9;
+              Tr(10,[Tr(11,[leaf 12;
+                            leaf 13;
+                            leaf 14]);
+                     leaf 15;
+                     Tr(16,[leaf 17;
+                            Tr(18,[leaf 19;
+                                   leaf 20])])])])
+let t1 = Tr(9,[Tr(2,[Tr(3,[leaf 4;
+                          leaf 5]);
+                    Tr(6,[leaf 7]);
+                    leaf 8]);
+              leaf 9;
+              Tr(13,[Tr(10,[leaf 12;
+                            leaf 13;
+                            leaf 14]);
+                     leaf 16;
+                     Tr(16,[leaf 17;
+                            Tr(18,[leaf 19;
+                                   leaf 20])])])])
 
 type multi_expr =
 MultiInt of int
@@ -80,3 +105,81 @@ let rec tutte_foglie_costi = function
 and mutua = function
 	[]->[]
 	|t::rest-> tutte_foglie_costi t @ mutua rest
+
+let rec cancella x = function
+	[] -> failwith "err"
+	|y::rest-> if x = y then rest
+				else y::cancella x rest
+(*'a ntree -> 'a list -> 'a ->'a list*)
+(*dato un albero e una lista e k riporti se esiste un percorso rad->foglia:k passando una volta x i nodi contentui in l*)
+let rec ramo_da_lista t l a = match t with
+	Tr(x,[]) -> if(x = a && l = [a]) then [x]
+					else failwith "err"
+	|Tr(x,tl)-> if List.mem x l then x::(rdl_l a (cancella x l) tl)
+				else failwith "err"
+and rdl_l k lst = function
+	[]->failwith "err"
+	|t::ts -> try ramo_da_lista t lst k 
+				with _-> rdl_l k lst ts 
+				
+let primo k = 
+	 let rec aux n =
+	 if k = n then true else if k <= 1 then true
+		else if (k mod n) = 0 then false
+		  	else true && aux (n+1)
+		in aux 2 
+
+let rec ramo_di_primi =function
+	Tr(x,[]) -> if primo x then x
+				else failwith "err"
+	|Tr(x,tl) -> if primo x then r_p_l tl
+					else failwith "err"
+and r_p_l = function
+	[]->failwith "err"
+	|t::rest-> try ramo_di_primi t 
+				with _ ->r_p_l rest	
+
+let rec path_non_pred p t = match t with 
+	Tr(x,[])-> if p x then failwith "err"
+				else [x]
+	|Tr(x, tl)-> if p x then failwith "err"
+					else x::(pnp_l p tl)
+and pnp_l p = function
+	[]-> failwith "err"
+	|t::ts -> try path_non_pred p t 
+				with _ -> pnp_l p ts
+
+let rec same_str t1 t2 = match (t1,t2) with
+	|(Tr(x,[]),Tr(y,[]))->true
+	|(Tr(x,tl1),Tr(y,tl2))-> (List.length tl1 = List.length tl2) && s_st_l tl1 tl2
+	|(_,_)-> false
+and s_st_l l1 l2 = match (l1,l2) with
+	([],[])-> true
+	|(a::r1, b::r2)-> same_str a b && s_st_l r1 r2 
+	|(_,_)-> false
+
+type col = Rosso | Giallo | Verde | Blu
+type 'a col_assoc = (col * 'a list) list
+let lst = [(Rosso,[1;2;4;7;10]); (Giallo,[3;8;11]);
+(Verde,[0;5;6;13]); (Blu,[9;12;14;15])]
+
+let rec radici = function
+	[]->[]
+	|Tr(x,_)::rest-> x::radici rest
+
+let rec colore n = function	
+	[]->failwith "err"
+	|(a,b)::rest-> if List.mem n b then a 
+					else colore n rest
+
+
+let rec ramo_colorato a lst t = match t with 
+	Tr(x,[])-> if x = a then [x]
+				else failwith "err"
+	|Tr(x,tl)-> let attuale = colore x lst in 
+				x::(r_c_list a lst (List.filter (function y-> (colore (root y) lst) <> attuale) tl ))
+and r_c_list a lst = function
+	[]-> failwith "err"
+	|tr::rest-> try ramo_colorato a lst tr 
+				with _-> r_c_list a lst rest	
+

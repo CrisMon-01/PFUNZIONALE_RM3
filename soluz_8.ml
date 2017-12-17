@@ -7,10 +7,10 @@ Int of int
 | Div of expr * expr
 
 let rec subexpr sopra sotto =
-	if sotto = sopra then true
-	else match sopra with
+	sotto = sopra
+	|| match sopra with
 		Sum (x,y) | Diff(x,y) | Mult(x,y) | Div(x,y) -> subexpr x sotto || subexpr y sotto
-		| _-> false
+		| _ -> false
 
 let rec subst_in_expr e1 x e2 =
 	match e1 with
@@ -115,15 +115,14 @@ let rec pattern_Match e1 e2 =
 let rec max_common t1 t2 =
 	match (t1,t2) with
 	(Empty,Empty)-> Empty
-	|(Empty, Tr(_,_,_))
-	|(Tr(_,_,_),Empty)-> Tr("@",Empty,Empty)
+	|(Empty, Tr(_,_,_))|(Tr(_,_,_),Empty)-> Tr("@",Empty,Empty)
 	|(Tr(a,ts1,td1), Tr(b,ts2,td2))-> if a <> b then Tr("@",Empty,Empty)
 										else Tr(a, max_common ts1 ts2,max_common td1 td2)
 
 let rec stessa_str t1 t2 = match (t1,t2) with
 	(Empty,Empty)-> true
 	|(Tr(_,_,_),Empty)|(Empty,Tr(_,_,_))-> false
-	|(Tr(_,ts1,td1),Tr(b,ts2,td2))-> stessa_str ts1 ts2 && stessa_str td1 td2
+	|(Tr(_,ts1,td1),Tr(_,ts2,td2))-> stessa_str ts1 ts2 && stessa_str td1 td2
 
 
 
