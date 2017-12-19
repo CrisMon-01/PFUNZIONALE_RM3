@@ -769,18 +769,22 @@ and r_c_list a lst = function
 	|tr::rest-> try ramo_colorato a lst tr 
 				with _-> r_c_list a lst rest	
 
+let rec listaGuida lista = function
+  |Tr(x,figli) -> if lista=[] then x
+          else listaGuida (List.tl lista) (List.nth figli (List.hd lista))
+
 type 'a ntree = Tr of 'a * 'a ntree list
 let leaf n = Tr(n,[])
 let t = Tr(1,[Tr(2,[Tr(3,[leaf 4;
                           leaf 5]);
-                    Tr(6,[leaf 7]);
+                    Tr(3,[leaf 7]);
                     leaf 8]);
               leaf 9;
               Tr(10,[Tr(11,[leaf 12;
                             leaf 13;
                             leaf 14]);
                      leaf 15;
-                     Tr(16,[leaf 17;
+                     Tr(3,[leaf 17;
                             Tr(18,[leaf 19;
                                    leaf 20])])])])
 let t1 = Tr(9,[Tr(2,[Tr(3,[leaf 4;
@@ -810,3 +814,60 @@ let rec fogli_lis lst = function
 and f_l_lis lst = function
 	[]-> failwith "err"
 	|t::ts-> fogli_lis lst t && f_l_lis lst ts
+
+
+let rec max_ll = function
+	[(a,b)]->(a,b)
+	|(a,b)::(c,d)::rest -> if b>d then max_ll((a,b)::rest)
+							else max_ll((c,d)::rest)
+
+let rec f_c = function
+	Tr(x,[])-> (x,x)
+	|Tr(x,tl)-> let (a,b) = max_ll (List.map(f_c ) tl) in (a,b+x)
+
+let rec ramo_condizioni p = function
+	Tr(x,[])-> if p x then [x]
+				else failwith "err"
+	|Tr(x,tl)-> if p x then x::(r_cond p tl)
+				else failwith "err"
+and r_cond p = function
+	[]->failwith "err"
+	|t::ts-> try ramo_condizioni p t with Failure "err"-> r_cond p ts
+
+let rut (Tr(x,_))=x
+
+let radici lst = List.map(function x-> rut x) lst
+
+let rec conta_fra y = function
+	Tr(x,[]) -> if x <> y then failwith "err"
+				else 0
+	|Tr(x,tl)-> if List.mem y (radici tl) then ((List.length tl)-1 + (c_f_lis y tl) )
+				else c_f_lis y tl
+and c_f_lis y = function
+	[]->0
+	|t::ts-> try ((conta_fra y t) + (c_f_lis y ts)) with _-> c_f_lis y ts
+
+let minp y t = 
+	let rec aux p = function
+		Empty-> failwith "err"
+		|Tr(x,sn,dx)-> if x = y then p
+						else try let p1 = aux (p+1) sn in
+							try let p2 = aux (p+1) dx in
+								min p1 p2
+							with _-> p1 
+						with _ -> aux (p+1) dx 
+		in aux 0 t
+
+let cerca_f p x li = List.exists (function y -> y<>x && p y)li
+
+type 'a ntree =Nt of  'a * 'a ntree list
+
+let figli ls = List.map (function (Nt(y,tl))-> y) ls
+
+let rec c_fra x p (Nt(_,tl)) = 
+	if List.mem x (figli tl) then (try cerca_f p x (figli tl)
+		with _ -> fra_liste x p tl)
+	else fra_liste x p tl
+and fra_liste x p = function
+	[]->failwith"err"
+	|t::ts -> try c_fra x p t with _ -> fra_liste x p ts
