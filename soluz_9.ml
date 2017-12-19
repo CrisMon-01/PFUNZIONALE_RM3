@@ -97,7 +97,7 @@ let rec foglia_costo = function
 	Tr(x,[])-> 	(x,x)
 	|Tr(x, tlist) -> let (a,b) = coppia_max(List.map(foglia_costo )tlist) in (a, x+b)
 
-(*int ntree -> (int * int)list*)
+(*int ntree -> (int * int)list￼*)
 (*riporta una lista di coppi contenente foglia e distanza da radice perogni foglia*)
 let rec tutte_foglie_costi = function
 	Tr(x,[])->[(x,x)]
